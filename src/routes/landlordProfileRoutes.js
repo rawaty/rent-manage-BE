@@ -7,5 +7,7 @@ const landlordProfileController = require("../controllers/landlordProfileControl
 
 router.post("/", auth, landlordProfileController.createLandlordProfile);
 router.delete("/:id", landlordProfileController.deleteLandlordProfile);
+router.post("/update", auth, landlordProfileController.updateLandlordProfile);
+router.post("/getProfile", auth, landlordProfileController.getProfileData);
 
 module.exports = router;

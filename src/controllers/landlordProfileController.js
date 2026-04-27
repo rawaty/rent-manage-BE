@@ -1,6 +1,5 @@
 const STATUS = require("../utils/statusCode");
 const landlordProfileService = require("../services/landlordProfileService");
-const { STATES } = require("mongoose");
 
 exports.createLandlordProfile = async (req, res) => {
   try {
@@ -19,18 +18,42 @@ exports.createLandlordProfile = async (req, res) => {
   }
 };
 
+exports.getProfileData = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id || req.body?.userId;
+    if (!userId) {
+      return res.status(STATUS.BAD_REQUEST).json({
+        success: false,
+        message: "userId is required",
+      });
+    }
+
+    const getUserProfileData = await landlordProfileService.getProfileData(userId);
+    res.status(STATUS.OK).json({
+      success: true,
+      data: getUserProfileData,
+    });
+  } catch (err) {
+    res.status(STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 exports.updateLandlordProfile = async (req, res) => {
   try {
     const updatedUser = await landlordProfileService.updateLandlordProfile(
       req.body
     );
-    res.status(STATES).json({
+    console.log(updatedUser);
+    res.status(STATUS.OK).json({
       success: true,
       data: updatedUser,
     });
   } catch (err) {
-    res.status(STATES).json({
-      success: true,
+    res.status(STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       data: err.message,
     });
   }
@@ -39,7 +62,7 @@ exports.updateLandlordProfile = async (req, res) => {
 exports.deleteLandlordProfile = async (req, res) => {
   try {
     const id = req.params.id;
-    console.log(id);
+
     const result = await landlordProfileService.deleteLandlordProfile(id);
     return res.status(STATUS.OK).json({
       success: true,

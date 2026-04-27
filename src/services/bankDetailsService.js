@@ -2,7 +2,7 @@ const BankDetails = require("../models/BankDetails");
 exports.createBankDetails = async (payload) => {
   try {
     const existing = await BankDetails.findOne({
-      landlordProfileId: payload.landlordProfileId,
+      userId: payload.userId,
     });
 
     if (existing) {
