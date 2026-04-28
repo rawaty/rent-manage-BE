@@ -28,7 +28,9 @@ exports.getProfileData = async (req, res) => {
       });
     }
 
-    const getUserProfileData = await landlordProfileService.getProfileData(userId);
+    const getUserProfileData = await landlordProfileService.getProfileData(
+      userId
+    );
     res.status(STATUS.OK).json({
       success: true,
       data: getUserProfileData,
