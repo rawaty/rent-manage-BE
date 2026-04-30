@@ -21,7 +21,7 @@ exports.login = async (email, mobileNo, password) => {
   const user = await User.findOne({
     $or: [{ emailId: email }, { mobileNo: mobileNo }],
   });
-  console.log(user.password);
+  const { _id, name } = user;
   if (!user) {
     throw new Error("user not found..");
   }

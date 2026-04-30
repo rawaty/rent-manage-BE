@@ -48,7 +48,6 @@ exports.updateLandlordProfile = async (req, res) => {
     const updatedUser = await landlordProfileService.updateLandlordProfile(
       req.body
     );
-    console.log(updatedUser);
     res.status(STATUS.OK).json({
       success: true,
       data: updatedUser,

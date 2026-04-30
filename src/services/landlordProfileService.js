@@ -25,7 +25,6 @@ exports.getProfileData = async (userId) => {
       throw new Error("Invalid userId");
     }
     const objectUserId = new mongoose.Types.ObjectId(userId);
-    // console.log(objectUserId);
     const [profileData, bank] = await Promise.all([
       LandlordProfile.findOne({ userId: objectUserId }),
       BankDetails.findOne({ userId: objectUserId }),
@@ -92,7 +91,6 @@ exports.updateLandlordProfile = async (payload) => {
         throw new Error("Bank not found");
       }
     }
-    console.log(landlord, bank);
     await session.commitTransaction();
     session.endSession();
     return { landlord, bank };
