@@ -36,14 +36,12 @@ exports.login = async (req, res) => {
     const data = {
       user: {
         id: user._id,
-        fullName: user.fullName,
-        email: user.emailId,
-        mobileNumber: user.mobileNo,
+        name: user.name,
+        emailId: user.emailId,
+        mobileNo: user.mobileNo,
         role: user.role,
-        profilePhoto: user.profilePhoto,
-        isProfileComplete: user.isProfileComplete,
       },
-      token: {
+      tokens: {
         accessToken: token,
       },
     };
