@@ -11,4 +11,7 @@ module.exports = {
     "ifscCode",
     "bankName",
   ],
+  MAX_ATTEMPTS: 5,
+  BLOCK_TIME: 15 * 60 * 1000, //15 min
+  COOLDOWN: 60 * 1000, // 60 sec
 };

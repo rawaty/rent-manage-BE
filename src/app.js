@@ -4,6 +4,7 @@ const landlordProfileRoute = require("./routes/landlordProfileRoutes");
 const bankDetailsRoute = require("./routes/bankDetailsRoutes");
 const authRoute = require("./routes/authRouter");
 const addPropertyRoute = require("./routes/addPropertyRouter");
+const otpRoute = require("./routes/otpRouter");
 const app = express();
 app.use(
   cors({
@@ -18,5 +19,6 @@ app.use("/api/landlord-profile", landlordProfileRoute);
 app.use("/api/bankDetails", bankDetailsRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/property", addPropertyRoute);
+app.use("/api/otp", otpRoute);
 
 module.exports = app;

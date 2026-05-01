@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 exports.register = async (payload) => {
   try {
@@ -21,7 +22,6 @@ exports.login = async (email, mobileNo, password) => {
   const user = await User.findOne({
     $or: [{ emailId: email }, { mobileNo: mobileNo }],
   });
-  const { _id, name } = user;
   if (!user) {
     throw new Error("user not found..");
   }
@@ -32,4 +32,34 @@ exports.login = async (email, mobileNo, password) => {
   }
 
   return user;
+};
+
+exports.generateToken = (user) => {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
+};
+
+exports.setAuthCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // ✅ important
+    sameSite: "lax",
+  });
+};
+
+exports.buildAuthResponse = (user, token) => {
+  console.log("user", user);
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      emailId: user.emailId,
+      mobileNo: user.mobileNo,
+      role: user.role,
+    },
+    tokens: {
+      accessToken: token,
+    },
+  };
 };
