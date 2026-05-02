@@ -37,7 +37,7 @@ exports.login = async (email, mobileNo, password, res) => {
   if (!match) {
     return {
       success: false,
-      message: "Invalid Password..",
+      message: "Invalid Credential..",
     };
   }
 
@@ -45,7 +45,7 @@ exports.login = async (email, mobileNo, password, res) => {
   authService.setAuthCookie(res, token);
   const data = authService.buildAuthResponse(user, token);
 
-  return { success: true, message: "login successfully", data };
+  return { success: true, message: "login successfully", user: data.user };
 };
 
 exports.generateToken = (user) => {

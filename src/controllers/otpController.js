@@ -6,7 +6,6 @@ exports.sendOtp = async (req, res) => {
     const { mobileNo } = req.body;
     const otpMessage = await otpService.sendOtp(mobileNo);
     res.status(STATUS.OK).json({
-      success: true,
       message: otpMessage,
     });
   } catch (err) {
@@ -21,9 +20,6 @@ exports.verifyOtp = async (req, res) => {
   try {
     const { mobileNo, otp } = req.body;
     const userData = await otpService.verifyOtp(mobileNo, otp, res);
-    // const token = authService.generateToken(userData);
-    // authService.setAuthCookie(res, token);
-    // const data = authService.buildAuthResponse(userData?.user, token);
 
     res.status(STATUS.OK).json({
       data: userData,

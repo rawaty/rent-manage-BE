@@ -47,7 +47,7 @@ exports.sendOtp = async (mobileNo) => {
       { upsert: true, returnDocument: "after" }
     );
 
-    return "OTP sent successfully";
+    return { success: true, message: "Otp sent successfully" };
   } catch (err) {
     throw err;
   }
@@ -105,7 +105,7 @@ exports.verifyOtp = async (mobileNo, enteredOtp, res) => {
     const token = authService.generateToken(user);
     authService.setAuthCookie(res, token);
     const data = authService.buildAuthResponse(user, token);
-    return { success: true, message: "Otp verified", data };
+    return { success: true, message: "Otp verified", user: data?.user };
   } catch (err) {
     throw err;
   }
