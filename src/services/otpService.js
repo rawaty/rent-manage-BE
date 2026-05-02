@@ -1,6 +1,8 @@
 const Otp = require("../models/Otp");
 const User = require("../models/User");
 const CONSTANT = require("../utils/constants");
+const authService = require("../services/authService");
+const jwt = require("jsonwebtoken");
 
 exports.generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -14,13 +16,19 @@ exports.sendOtp = async (mobileNo) => {
     const record = await Otp.findOne({ mobileNo });
 
     if (record?.blockedUntil && record.blockedUntil > now) {
-      throw new Error("Too many requests. Try again later");
+      return {
+        success: false,
+        message: "Too many requests. Try again later",
+      };
     }
     if (
       record &&
       record.lastSentAt > new Date(Date.now() - CONSTANT.COOLDOWN)
     ) {
-      throw new Error("Please wait before requesting another OTP");
+      return {
+        success: false,
+        message: "Please wait before requesting another OTP",
+      };
     }
 
     if (record && record.expiresAt > now) {
@@ -45,27 +53,39 @@ exports.sendOtp = async (mobileNo) => {
   }
 };
 
-exports.verifyOtp = async (mobileNo, enteredOtp) => {
+exports.verifyOtp = async (mobileNo, enteredOtp, res) => {
   try {
     const user = await User.findOne({
       mobileNo,
     });
     if (!user) {
-      throw new Error("mobile number is incorrect, please sign in");
+      return {
+        success: false,
+        message: "mobile number is incorrect, please sign in",
+      };
     }
     const record = await Otp.findOne({
       mobileNo,
     });
 
     if (!record) {
-      throw new Error("OTP not found");
+      return {
+        success: false,
+        message: "OTP not found",
+      };
     }
     if (record.blockedUntil && record.blockedUntil > new Date()) {
-      throw new Error("Too many attempts. Try again later");
+      return {
+        success: false,
+        message: "Too many attempts. Try again later",
+      };
     }
     //check expiry
     if (record.expiresAt < new Date()) {
-      throw new Error("Otp Expired.");
+      return {
+        success: false,
+        message: "Otp Expired.",
+      };
     }
     if (Number(record.otp) !== Number(enteredOtp)) {
       record.attempts += 1;
@@ -74,12 +94,18 @@ exports.verifyOtp = async (mobileNo, enteredOtp) => {
         record.attempts = 0; // reset
       }
       await record.save();
-      throw new Error("Invalid OTP");
+
+      return {
+        success: false,
+        message: "Invalid OTP",
+      };
     }
 
     await Otp.deleteOne({ mobileNo });
-
-    return { message: "Otp verified", user };
+    const token = authService.generateToken(user);
+    authService.setAuthCookie(res, token);
+    const data = authService.buildAuthResponse(user, token);
+    return { success: true, message: "Otp verified", data };
   } catch (err) {
     throw err;
   }

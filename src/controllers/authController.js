@@ -7,7 +7,6 @@ exports.register = async (req, res) => {
     const user = await authService.register(req.body);
 
     res.status(STATUS.CREATED).json({
-      success: true,
       data: user,
     });
   } catch (err) {
@@ -21,37 +20,34 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { emailId, mobileNo, password } = req.body;
-    const user = await authService.login(emailId, mobileNo, password);
+    const user = await authService.login(emailId, mobileNo, password, res);
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
-    const data = {
-      user: {
-        id: user._id,
-        name: user.name,
-        emailId: user.emailId,
-        mobileNo: user.mobileNo,
-        role: user.role,
-      },
-      tokens: {
-        accessToken: token,
-      },
-    };
+    // const token = authService.generateToken(user);
+    // authService.setAuthCookie(res, token);
+    // const data = authService.buildAuthResponse(user, token);
     res.status(STATUS.OK).json({
       success: true,
-      data: data,
+      data: user,
     });
   } catch (err) {
     res.status(STATUS.OK).json({
       success: true,
+      data: err.message,
+    });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    const logoutUser = await authService.logout(res);
+
+    res.status(STATUS.OK).json({
+      success: true,
+      data: logoutUser,
+    });
+  } catch (err) {
+    res.status(STATUS.OK).json({
+      success: false,
       data: err.message,
     });
   }

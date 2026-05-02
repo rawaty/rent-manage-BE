@@ -2,19 +2,42 @@ const BankDetails = require("../models/BankDetails");
 const LandlordProfile = require("../models/LandlordProfile");
 const CONSTANT = require("../utils/constants");
 const { filterField } = require("../utils/filtereField");
+const User = require("../models/User");
 
 const mongoose = require("mongoose");
 
 exports.createLandlordProfile = async (payload) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(payload.userId)) {
+      return { success: false, message: "Invalid ID format" };
+    }
+    const user = await User.findById(payload.userId);
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found",
+      };
+    }
+
     const existing = await LandlordProfile.findOne({
       userId: payload.userId,
     });
+
     if (existing) {
-      throw new Error("Landlord profile is already in database");
+      return {
+        success: false,
+        message: "Landlord profile already exists",
+      };
     }
 
-    return await LandlordProfile.create(payload);
+    const profile = await LandlordProfile.create(payload);
+
+    return {
+      success: true,
+      message: "Landlord profile created successfully",
+      data: profile,
+    };
   } catch (err) {
     throw err;
   }
@@ -22,7 +45,10 @@ exports.createLandlordProfile = async (payload) => {
 exports.getProfileData = async (userId) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new Error("Invalid userId");
+      return {
+        success: false,
+        message: "Invalid userId",
+      };
     }
     const objectUserId = new mongoose.Types.ObjectId(userId);
     const [profileData, bank] = await Promise.all([
@@ -39,7 +65,7 @@ exports.deleteLandlordProfile = async (id) => {
   try {
     const landlordProfile = await LandlordProfile.findByIdAndDelete(id);
     if (!landlordProfile) {
-      throw new Error("Landlord profile not found");
+      return { success: false, message: "Landlord profile not found" };
     }
     await BankDetails.deleteMany({
       userId: landlordProfile.userId,
@@ -74,7 +100,10 @@ exports.updateLandlordProfile = async (payload) => {
         { returnDocument: "after", session, runValidators: true }
       );
       if (!landlord) {
-        throw new Error("Landlord not found..");
+        return {
+          success: false,
+          message: "Landlord not found..",
+        };
       }
     }
 
@@ -88,7 +117,10 @@ exports.updateLandlordProfile = async (payload) => {
         { returnDocument: "after", session, runValidators: true }
       );
       if (!bank) {
-        throw new Error("Bank not found");
+        return {
+          success: false,
+          message: "Bank not found",
+        };
       }
     }
     await session.commitTransaction();

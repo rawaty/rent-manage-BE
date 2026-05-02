@@ -20,14 +20,13 @@ exports.sendOtp = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
   try {
     const { mobileNo, otp } = req.body;
-    const userData = await otpService.verifyOtp(mobileNo, otp);
-    const token = authService.generateToken(userData);
-    authService.setAuthCookie(res, token);
-    const data = authService.buildAuthResponse(userData?.user, token);
+    const userData = await otpService.verifyOtp(mobileNo, otp, res);
+    // const token = authService.generateToken(userData);
+    // authService.setAuthCookie(res, token);
+    // const data = authService.buildAuthResponse(userData?.user, token);
 
     res.status(STATUS.OK).json({
-      success: true,
-      data: data,
+      data: userData,
     });
   } catch (err) {
     res.status(STATUS.OK).json({

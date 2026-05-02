@@ -6,7 +6,7 @@ exports.createBankDetails = async (payload) => {
     });
 
     if (existing) {
-      throw new Error("BankDetails already exist");
+      return { success: false, message: "BankDetails already exist" };
     }
     const bankdetails = await BankDetails.create(payload);
 

@@ -7,7 +7,6 @@ exports.createLandlordProfile = async (req, res) => {
       req.body
     );
     res.status(STATUS.CREATED).json({
-      success: true,
       data: landlordProfile,
     });
   } catch (err) {

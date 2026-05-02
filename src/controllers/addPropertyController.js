@@ -23,12 +23,10 @@ exports.addProperty = async (req, res) => {
 
     const addedProperty = await addPropertyService.addProperty(payload);
     res.status(STATUS.OK).json({
-      success: true,
       data: addedProperty,
     });
   } catch (err) {
     res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
       message: err.message,
     });
   }

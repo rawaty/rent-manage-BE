@@ -12,7 +12,7 @@ const OtpSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // 🔥 this adds createdAt & updatedAt automatically
+    timestamps: true,
   }
 );
 
