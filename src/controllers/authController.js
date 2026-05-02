@@ -22,11 +22,7 @@ exports.login = async (req, res) => {
     const { emailId, mobileNo, password } = req.body;
     const user = await authService.login(emailId, mobileNo, password, res);
 
-    // const token = authService.generateToken(user);
-    // authService.setAuthCookie(res, token);
-    // const data = authService.buildAuthResponse(user, token);
     res.status(STATUS.OK).json({
-      success: true,
       data: user,
     });
   } catch (err) {

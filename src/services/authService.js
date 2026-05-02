@@ -45,7 +45,7 @@ exports.login = async (email, mobileNo, password, res) => {
   authService.setAuthCookie(res, token);
   const data = authService.buildAuthResponse(user, token);
 
-  return data;
+  return { success: true, message: "login successfully", data };
 };
 
 exports.generateToken = (user) => {
