@@ -105,7 +105,7 @@ exports.verifyOtp = async (mobileNo, enteredOtp, res) => {
     const token = authService.generateToken(user);
     authService.setAuthCookie(res, token);
     const data = authService.buildAuthResponse(user, token);
-    return { success: true, message: "Otp verified", user: data?.user };
+    return { success: true, message: "Otp verified", data };
   } catch (err) {
     throw err;
   }

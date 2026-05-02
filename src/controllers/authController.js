@@ -6,9 +6,7 @@ exports.register = async (req, res) => {
   try {
     const user = await authService.register(req.body);
 
-    res.status(STATUS.CREATED).json({
-      data: user,
-    });
+    res.status(STATUS.CREATED).json(user);
   } catch (err) {
     res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
@@ -22,9 +20,7 @@ exports.login = async (req, res) => {
     const { emailId, mobileNo, password } = req.body;
     const user = await authService.login(emailId, mobileNo, password, res);
 
-    res.status(STATUS.OK).json({
-      data: user,
-    });
+    res.status(STATUS.OK).json(user);
   } catch (err) {
     res.status(STATUS.OK).json({
       success: true,

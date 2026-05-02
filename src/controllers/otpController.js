@@ -5,9 +5,7 @@ exports.sendOtp = async (req, res) => {
   try {
     const { mobileNo } = req.body;
     const otpMessage = await otpService.sendOtp(mobileNo);
-    res.status(STATUS.OK).json({
-      message: otpMessage,
-    });
+    res.status(STATUS.OK).json(otpMessage);
   } catch (err) {
     res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
@@ -21,9 +19,7 @@ exports.verifyOtp = async (req, res) => {
     const { mobileNo, otp } = req.body;
     const userData = await otpService.verifyOtp(mobileNo, otp, res);
 
-    res.status(STATUS.OK).json({
-      data: userData,
-    });
+    res.status(STATUS.OK).json(userData);
   } catch (err) {
     res.status(STATUS.OK).json({
       success: false,
