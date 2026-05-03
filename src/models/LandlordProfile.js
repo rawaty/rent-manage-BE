@@ -17,6 +17,7 @@ const landlordProfileSchema = new mongoose.Schema(
     },
     profilePhoto: {
       type: String,
+      public_id: String,
     },
     panNo: {
       type: String,

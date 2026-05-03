@@ -44,9 +44,13 @@ exports.getProfileData = async (req, res) => {
 
 exports.updateLandlordProfile = async (req, res) => {
   try {
-    const updatedUser = await landlordProfileService.updateLandlordProfile(
-      req.body
-    );
+    const updatedUser = await landlordProfileService.updateLandlordProfile({
+      userId: req.user.id,
+      landlordData: req.body.landlordData || {},
+      file: req.files?.profileImage?.[0],
+      documents: req.files?.documents || [],
+      bankData: req.body.bankData || {},
+    });
     res.status(STATUS.OK).json({
       success: true,
       data: updatedUser,

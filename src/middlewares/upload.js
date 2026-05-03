@@ -1,12 +1,18 @@
 const multer = require("multer");
 
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+const storage = multer.memoryStorage();
 
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype.startsWith("image/") ||
+    file.mimetype === "application/pdf"
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error("Invalid file type"), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 module.exports = upload;
