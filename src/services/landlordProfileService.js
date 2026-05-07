@@ -1,5 +1,5 @@
 const BankDetails = require("../models/BankDetails");
-const LandlordProfile = require("../models/LandlordProfile");
+const LandlordProfile = require("../models/landlordProfile");
 const CONSTANT = require("../utils/constants");
 const { filterField } = require("../utils/filtereField");
 const User = require("../models/User");

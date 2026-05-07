@@ -6,9 +6,28 @@ const authRoute = require("./routes/authRouter");
 const addPropertyRoute = require("./routes/addPropertyRouter");
 const otpRoute = require("./routes/otpRouter");
 const app = express();
+
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://your-nextjs-app.vercel.app"],
+    origin: (origin, callback) => {
+      // Allow non-browser clients (Postman/cURL/server-to-server)
+      if (!origin) return callback(null, true);
+
+      // If no env is set, allow localhost to keep local dev easy
+      if (!allowedOrigins.length) {
+        const localAllowed = ["http://localhost:3000", "http://127.0.0.1:3000"];
+        if (localAllowed.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+      }
+
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
