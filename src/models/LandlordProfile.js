@@ -15,8 +15,8 @@ const landlordProfileSchema = new mongoose.Schema(
       type: String,
       default: "English",
     },
-    profilePhoto: {
-      type: String,
+    profileImage: {
+      url: String,
       public_id: String,
     },
     panNo: {
