@@ -46,11 +46,17 @@ exports.updateLandlordProfile = async (req, res) => {
   try {
     const updatedUser = await landlordProfileService.updateLandlordProfile({
       userId: req.user.id,
-      landlordData: req.body.landlordData || {},
+
+      landlordData: JSON.parse(req.body.landlordData || "{}"),
+
+      bankData: JSON.parse(req.body.bankData || "{}"),
+
+      // files
       file: req.files?.profileImage?.[0],
+
       documents: req.files?.documents || [],
-      bankData: req.body.bankData || {},
     });
+
     res.status(STATUS.OK).json({
       success: true,
       data: updatedUser,
@@ -58,11 +64,10 @@ exports.updateLandlordProfile = async (req, res) => {
   } catch (err) {
     res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      data: err.message,
+      message: err.message,
     });
   }
 };
-
 exports.deleteLandlordProfile = async (req, res) => {
   try {
     const id = req.params.id;

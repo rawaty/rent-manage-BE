@@ -5,7 +5,7 @@ exports.createBankDetails = async (req, res) => {
   try {
     const bank = await bankService.createBankDetails(req.body);
 
-    res.status(statusCode.CREATED).json({
+    res.status(statusCode.OK).json({
       success: true,
       data: bank,
     });
