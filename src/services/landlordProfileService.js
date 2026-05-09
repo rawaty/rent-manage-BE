@@ -52,10 +52,24 @@ exports.getProfileData = async (userId) => {
       };
     }
     const objectUserId = new mongoose.Types.ObjectId(userId);
+    const user = await LandlordProfile.findOne({ userId: objectUserId });
+    if (!user) {
+      return {
+        success: false,
+        message: "Landlord profile not found",
+      };
+    }
     const [profileData, bank] = await Promise.all([
       LandlordProfile.findOne({ userId: objectUserId }),
       BankDetails.findOne({ userId: objectUserId }),
     ]);
+    // optional existence check
+    if (!profileData && !bank) {
+      return {
+        success: false,
+        message: "Profile data not found",
+      };
+    }
     return { profileData: profileData || null, bank: bank || null };
   } catch (err) {
     throw err;
@@ -97,13 +111,9 @@ exports.updateLandlordProfile = async (payload) => {
     );
 
     let landlord = await LandlordProfile.findOne({ userId }).session(session);
+    console.log("landlord before update", landlord);
 
-    if (!landlord) {
-      throw new Error("Landlord not found");
-    }
-
-    // store old image before update
-    const oldProfileImageId = landlord.profileImage?.public_id;
+    const oldProfileImageId = landlord?.profileImage?.public_id;
 
     //upload profile image
     if (file) {
@@ -128,7 +138,7 @@ exports.updateLandlordProfile = async (payload) => {
       landlord = await LandlordProfile.findOneAndUpdate(
         { userId },
         { $set: filteredLandlordData },
-        { returnDocument: "after", session, runValidators: true }
+        { returnDocument: "after", session, runValidators: true, upsert: true }
       );
     }
 
@@ -150,7 +160,16 @@ exports.updateLandlordProfile = async (payload) => {
     await session.commitTransaction();
     session.endSession();
 
-    return { landlord, bank };
+    const user = filterField(
+      landlord.toObject(),
+      CONSTANT.LANDLORD_ALLOWED_FIELDS
+    );
+
+    const bankDetails = filterField(
+      bank.toObject(),
+      CONSTANT.BANK_ALLOWED_FIELDS
+    );
+    return { user, bankDetails };
   } catch (err) {
     // 🔥 rollback uploaded files
     await uploadService.deleteMultiple(uploadedIds);

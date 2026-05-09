@@ -11,7 +11,7 @@ router.delete(
   auth,
   landlordProfileController.deleteLandlordProfile
 );
-router.post(
+router.patch(
   "/update",
   auth,
   upload.fields([
@@ -20,6 +20,6 @@ router.post(
   ]),
   landlordProfileController.updateLandlordProfile
 );
-router.post("/getProfile", auth, landlordProfileController.getProfileData);
+router.get("/getProfile/:id", auth, landlordProfileController.getProfileData);
 
 module.exports = router;

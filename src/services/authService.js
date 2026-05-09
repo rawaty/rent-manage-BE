@@ -15,7 +15,11 @@ exports.register = async (payload) => {
         message: "User is already Registered...",
       };
     }
-    await User.create({ ...payload, password: hashed });
+    await User.create({
+      ...payload,
+      password: hashed,
+      isProfileComplete: false,
+    });
     return { success: true, message: "sign up successfully" };
   } catch (err) {
     throw err;

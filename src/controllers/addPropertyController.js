@@ -4,7 +4,7 @@ exports.addProperty = async (req, res) => {
   try {
     const payload = {
       ...req.body,
-      userId: req.user?.id || req.body?.userId,
+      userId: req.body?.userId,
     };
 
     if (!payload.userId) {
@@ -22,11 +22,9 @@ exports.addProperty = async (req, res) => {
     }
 
     const addedProperty = await addPropertyService.addProperty(payload);
-    res.status(STATUS.OK).json({
-      data: addedProperty,
-    });
+    return res.status(STATUS.OK).json(addedProperty);
   } catch (err) {
-    res.status(STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
       message: err.message,
     });
   }

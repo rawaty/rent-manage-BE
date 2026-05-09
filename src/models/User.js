@@ -24,6 +24,10 @@ const UserSchema = new mongoose.Schema(
       enum: ["OWNER", "MANAGER", "ADMIN"],
       default: "OWNER",
     },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

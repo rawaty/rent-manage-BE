@@ -19,7 +19,7 @@ exports.createLandlordProfile = async (req, res) => {
 
 exports.getProfileData = async (req, res) => {
   try {
-    const userId = req.user?.id || req.user?._id || req.body?.userId;
+    const userId = req.params?.id;
     if (!userId) {
       return res.status(STATUS.BAD_REQUEST).json({
         success: false,

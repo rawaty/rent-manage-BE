@@ -2,7 +2,7 @@ module.exports = {
   LANDLORD_ALLOWED_FIELDS: [
     "state",
     "preferredLanguage",
-    "profilePhoto",
+    "profileImage",
     "panNo",
   ],
   BANK_ALLOWED_FIELDS: [

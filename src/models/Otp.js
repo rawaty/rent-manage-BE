@@ -3,7 +3,7 @@ const OtpSchema = new mongoose.Schema(
   {
     mobileNo: String,
     otp: String,
-    expiresAt: Date,
+    expiresAt: { type: Date, index: { expires: 0 } },
     attempts: { type: Number, default: 0 },
     blockedUntil: { type: Date, default: null },
     lastSentAt: {
