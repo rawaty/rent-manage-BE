@@ -4,4 +4,14 @@ const auth = require("../middlewares/authMiddleware");
 const addPropertyController = require("../controllers/addPropertyController");
 
 router.post("/add-property", auth, addPropertyController.addProperty);
+router.put(
+  "/update-property/:propertyId",
+  auth,
+  addPropertyController.updateProperty
+);
+router.delete(
+  "/delete-property/:propertyId",
+  auth,
+  addPropertyController.deleteProperty
+);
 module.exports = router;
