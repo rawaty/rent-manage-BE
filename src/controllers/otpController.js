@@ -1,37 +1,56 @@
-const authService = require("../services/authService");
 const otpService = require("../services/otpService");
 const User = require("../models/User");
 const STATUS = require("../utils/statusCode");
-exports.sendOtp = async (req, res) => {
+const { sendSuccess, sendError } = require("../utils/sendResponse");
+
+exports.sendOtp = async (req, res, next) => {
   try {
     const { mobileNo } = req.body;
+
     const user = await User.findOne({ mobileNo });
     if (!user) {
-      return res.status(STATUS.BAD_REQUEST).json({
-        success: false,
+      return sendError(res, {
+        status: STATUS.NOT_FOUND,
         message: "User not found",
       });
     }
-    const otpMessage = await otpService.sendOtp(mobileNo);
-    res.status(STATUS.OK).json(otpMessage);
-  } catch (err) {
-    res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: err.message,
+
+    const result = await otpService.sendOtp(mobileNo);
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
     });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.verifyOtp = async (req, res) => {
+exports.verifyOtp = async (req, res, next) => {
   try {
     const { mobileNo, otp } = req.body;
-    const userData = await otpService.verifyOtp(mobileNo, otp, res);
+    const result = await otpService.verifyOtp(mobileNo, otp, res);
 
-    res.status(STATUS.OK).json(userData);
-  } catch (err) {
-    res.status(STATUS.OK).json({
-      success: false,
-      data: err.message,
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
+      data: result.data,
     });
+  } catch (err) {
+    next(err);
   }
 };

@@ -1,6 +1,30 @@
 const addPropertyService = require("../services/addPropertyService");
 const STATUS = require("../utils/statusCode");
-exports.addProperty = async (req, res) => {
+const { sendSuccess, sendError } = require("../utils/sendResponse");
+
+exports.getProperties = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const result = await addPropertyService.getProperties(userId);
+
+    if (result && !result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: "Properties fetched successfully",
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.addProperty = async (req, res, next) => {
   try {
     const payload = {
       ...req.body,
@@ -8,53 +32,78 @@ exports.addProperty = async (req, res) => {
     };
 
     if (!payload.userId) {
-      return res.status(STATUS.BAD_REQUEST).json({
-        success: false,
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
         message: "userId is required",
       });
     }
 
     if (payload.monthlyRent === undefined || payload.monthlyRent === null) {
-      return res.status(STATUS.BAD_REQUEST).json({
-        success: false,
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
         message: "monthlyRent is required",
       });
     }
 
-    const addedProperty = await addPropertyService.addProperty(payload);
-    return res.status(STATUS.OK).json(addedProperty);
-  } catch (err) {
-    return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      message: err.message,
+    const result = await addPropertyService.addProperty(payload);
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.CREATED,
+      message: result.message,
     });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.updateProperty = async (req, res) => {
+exports.updateProperty = async (req, res, next) => {
   try {
     const { propertyId } = req.params;
-    const payload = req.body;
-
-    const updatedProperty = await addPropertyService.updateProperty(
+    const result = await addPropertyService.updateProperty(
       propertyId,
-      payload
+      req.body
     );
-    return res.status(STATUS.OK).json(updatedProperty);
-  } catch (err) {
-    return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      message: err.message,
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
     });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.deleteProperty = async (req, res) => {
+exports.deleteProperty = async (req, res, next) => {
   try {
     const { propertyId } = req.params;
-    const deletedProperty = await addPropertyService.deleteProperty(propertyId);
-    return res.status(STATUS.OK).json(deletedProperty);
-  } catch (err) {
-    return res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      message: err.message,
+    const result = await addPropertyService.deleteProperty(propertyId);
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.NOT_FOUND,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
     });
+  } catch (err) {
+    next(err);
   }
 };

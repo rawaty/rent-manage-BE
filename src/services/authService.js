@@ -1,55 +1,48 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const authService = require("../services/authService");
 const jwt = require("jsonwebtoken");
 
+// Check for existing user BEFORE hashing to avoid wasted CPU
 exports.register = async (payload) => {
-  try {
-    const hashed = await bcrypt.hash(payload.password, 10);
-    const existing = await User.findOne({
-      $or: [{ emailId: payload.emailId }, { mobileNo: payload.mobileNo }],
-    });
-    if (existing) {
-      return {
-        success: false,
-        message: "User is already Registered...",
-      };
-    }
-    await User.create({
-      ...payload,
-      password: hashed,
-      isProfileComplete: false,
-    });
-    return { success: true, message: "sign up successfully" };
-  } catch (err) {
-    throw err;
+  const existing = await User.findOne({
+    $or: [{ emailId: payload.emailId }, { mobileNo: payload.mobileNo }],
+  });
+
+  if (existing) {
+    return { success: false, message: "User already registered" };
   }
+
+  const hashed = await bcrypt.hash(payload.password, 10);
+
+  await User.create({
+    ...payload,
+    password: hashed,
+    isProfileComplete: false,
+  });
+
+  return { success: true, message: "Signed up successfully" };
 };
 
 exports.login = async (email, mobileNo, password, res) => {
   const user = await User.findOne({
     $or: [{ emailId: email }, { mobileNo: mobileNo }],
   });
+
   if (!user) {
-    return {
-      success: false,
-      message: "User not found..",
-    };
+    return { success: false, message: "User not found" };
   }
 
   const match = await bcrypt.compare(password, user.password);
   if (!match) {
-    return {
-      success: false,
-      message: "Invalid Credential..",
-    };
+    return { success: false, message: "Invalid credentials" };
   }
 
-  const token = authService.generateToken(user);
-  authService.setAuthCookie(res, token);
-  const data = authService.buildAuthResponse(user, token);
+  // Use exports.* directly — no circular self-require needed
+  const token = exports.generateToken(user);
+  exports.setAuthCookie(res, token);
+  const data = exports.buildAuthResponse(user, token);
 
-  return { success: true, message: "login successfully", data };
+  return { success: true, message: "Logged in successfully", data };
 };
 
 exports.generateToken = (user) => {
@@ -61,7 +54,7 @@ exports.generateToken = (user) => {
 exports.setAuthCookie = (res, token) => {
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // ✅ important
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
   });
 };
@@ -81,11 +74,10 @@ exports.buildAuthResponse = (user, token) => {
   };
 };
 
-exports.logout = async (res) => {
+exports.logout = (res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
   });
-  return "logout Successfully";
 };

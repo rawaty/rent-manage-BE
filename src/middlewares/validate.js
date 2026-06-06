@@ -1,12 +1,19 @@
 const STATUS = require("../utils/statusCode");
+const { sendError } = require("../utils/sendResponse");
 
 exports.validate = (schema) => (req, res, next) => {
-  const { error } = schema.validate(req.body);
+  const { error } = schema.validate(req.body, { abortEarly: false });
 
   if (error) {
-    return res.status(STATUS.BAD_REQUEST).json({
-      success: false,
-      message: error.details[0].message,
+    const errors = error.details.map((d) => ({
+      field: d.context?.key || null,
+      message: d.message,
+    }));
+
+    return sendError(res, {
+      status: STATUS.BAD_REQUEST,
+      message: "Validation failed",
+      errors,
     });
   }
 

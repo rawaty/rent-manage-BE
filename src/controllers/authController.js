@@ -1,46 +1,59 @@
 const authService = require("../services/authService");
 const STATUS = require("../utils/statusCode");
-const jwt = require("jsonwebtoken");
+const { sendSuccess, sendError } = require("../utils/sendResponse");
 
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
-    const user = await authService.register(req.body);
+    const result = await authService.register(req.body);
 
-    res.status(STATUS.CREATED).json(user);
-  } catch (err) {
-    res.status(STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: err.message,
+    // Service signals a business-rule failure (e.g. user already exists)
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.CREATED,
+      message: result.message,
     });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { emailId, mobileNo, password } = req.body;
-    const user = await authService.login(emailId, mobileNo, password, res);
+    const result = await authService.login(emailId, mobileNo, password, res);
 
-    res.status(STATUS.OK).json(user);
-  } catch (err) {
-    res.status(STATUS.OK).json({
-      success: true,
-      data: err.message,
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.UNAUTHORIZED,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
+      data: result.data,
     });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.logout = async (req, res) => {
+exports.logout = async (req, res, next) => {
   try {
-    const logoutUser = await authService.logout(res);
+    await authService.logout(res);
 
-    res.status(STATUS.OK).json({
-      success: true,
-      data: logoutUser,
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: "Logged out successfully",
     });
   } catch (err) {
-    res.status(STATUS.OK).json({
-      success: false,
-      data: err.message,
-    });
+    next(err);
   }
 };

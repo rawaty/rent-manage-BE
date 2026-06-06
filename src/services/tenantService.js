@@ -1,9 +1,6 @@
-const Tenant = require("../models/Property");
+const Tenant = require("../models/Tenant");
+
 exports.onBoardTenant = async (payload) => {
-  try {
-    const tenant = await Tenant.create(payload);
-    return tenant;
-  } catch (err) {
-    throw err;
-  }
+  const tenant = await Tenant.create(payload);
+  return { success: true, data: tenant };
 };

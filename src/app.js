@@ -5,6 +5,7 @@ const bankDetailsRoute = require("./routes/bankDetailsRoutes");
 const authRoute = require("./routes/authRouter");
 const addPropertyRoute = require("./routes/addPropertyRouter");
 const otpRoute = require("./routes/otpRouter");
+const errorHandler = require("./middlewares/errorHandler");
 const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGINS || "")
@@ -39,5 +40,8 @@ app.use("/api/bankDetails", bankDetailsRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/property", addPropertyRoute);
 app.use("/api/otp", otpRoute);
+
+// Global error handler — must be last
+app.use(errorHandler);
 
 module.exports = app;
