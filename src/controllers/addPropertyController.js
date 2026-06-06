@@ -4,7 +4,7 @@ const { sendSuccess, sendError } = require("../utils/sendResponse");
 
 exports.getProperties = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.body;
     const result = await addPropertyService.getProperties(userId);
 
     if (result && !result.success) {

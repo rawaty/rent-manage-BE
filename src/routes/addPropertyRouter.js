@@ -14,4 +14,5 @@ router.delete(
   auth,
   addPropertyController.deleteProperty
 );
+router.get("/get-properties", addPropertyController.getProperties);
 module.exports = router;
