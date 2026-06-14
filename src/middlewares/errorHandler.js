@@ -1,16 +1,22 @@
 const { sendError } = require("../utils/sendResponse");
 const STATUS = require("../utils/statusCode");
+const multer = require("multer");
 
 /**
  * Global Express error-handling middleware.
  * Must be registered LAST in app.js (after all routes).
- *
- * Catches anything passed via next(err) or unhandled throws
- * and returns a consistent error envelope.
  */
 // eslint-disable-next-line no-unused-vars
 module.exports = (err, req, res, next) => {
   console.error("[ERROR]", err);
+
+  // Multer file upload errors (wrong type, too many files, etc.)
+  if (err instanceof multer.MulterError || err.status === 400 && err.message) {
+    return sendError(res, {
+      status: STATUS.BAD_REQUEST,
+      message: err.message,
+    });
+  }
 
   // Mongoose validation errors
   if (err.name === "ValidationError") {

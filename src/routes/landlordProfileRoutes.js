@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/upload");
+const { uploadDocument } = require("../middlewares/upload");
 const landlordProfileController = require("../controllers/landlordProfileController");
 
 router.post("/", auth, landlordProfileController.createLandlordProfile);
@@ -14,7 +14,7 @@ router.delete(
 router.patch(
   "/update",
   auth,
-  upload.fields([
+  uploadDocument.fields([
     { name: "profileImage", maxCount: 1 },
     { name: "documents", maxCount: 5 },
   ]),

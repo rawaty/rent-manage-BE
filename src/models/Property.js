@@ -66,7 +66,7 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    photos: [
+    propertyImages: [
       {
         url: String,
         publicId: String,

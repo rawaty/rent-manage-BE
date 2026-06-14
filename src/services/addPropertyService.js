@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const Property = require("../models/Property");
 const User = require("../models/User");
+const { filterField } = require("../utils/filtereField");
+const CONSTANT = require("../utils/constants");
+const uploadService = require("./uploadService");
 
 exports.addProperty = async (payload) => {
-  const { userId, monthlyRent } = payload;
+  const { userId, monthlyRent, files } = payload;
 
-  // Validate inputs before hitting the DB
   if (!userId) {
     return { success: false, message: "userId is required" };
   }
@@ -27,9 +29,31 @@ exports.addProperty = async (payload) => {
     return { success: false, message: "User not found" };
   }
 
-  await Property.create(payload);
+  const filteredData = filterField(payload, CONSTANT.PROPERTY_ALLOWED_FIELDS);
 
-  return { success: true, message: "Property added successfully" };
+  // Track uploaded IDs for rollback on DB failure
+  const uploadedIds = [];
+
+  try {
+    if (files && files.length) {
+      const uploaded = await uploadService.uploadMultiple(files, "propertyImages");
+      uploadedIds.push(...uploaded.map((d) => d.public_id));
+      filteredData.propertyImages = uploaded.map((d) => ({
+        url: d.url,
+        publicId: d.public_id,
+      }));
+    }
+
+    const property = await Property.create({ ...filteredData, userId });
+
+    return { success: true, message: "Property added successfully", data: property };
+  } catch (err) {
+    // Rollback any uploaded images if DB write fails
+    if (uploadedIds.length) {
+      await uploadService.deleteMultiple(uploadedIds);
+    }
+    throw err;
+  }
 };
 
 exports.updateProperty = async (propertyId, payload) => {
@@ -49,11 +73,45 @@ exports.updateProperty = async (propertyId, payload) => {
     return { success: false, message: "Property not found" };
   }
 
-  await Property.findByIdAndUpdate(propertyId, payload, {
-    runValidators: true,
-  });
+  const { files } = payload;
+  const filteredData = filterField(payload, CONSTANT.PROPERTY_ALLOWED_FIELDS);
 
-  return { success: true, message: "Property updated successfully" };
+  const uploadedIds = [];
+
+  try {
+    if (files && files.length) {
+      const uploaded = await uploadService.uploadMultiple(files, "propertyImages");
+      uploadedIds.push(...uploaded.map((d) => d.public_id));
+      filteredData.propertyImages = uploaded.map((d) => ({
+        url: d.url,
+        publicId: d.public_id,
+      }));
+    }
+
+    const updated = await Property.findByIdAndUpdate(
+      propertyId,
+      { $set: filteredData },
+      { new: true, runValidators: true }
+    );
+
+    // Delete old images from Cloudinary after successful DB write
+    if (files && files.length && property.propertyImages?.length) {
+      const oldIds = property.propertyImages
+        .map((img) => img.publicId)
+        .filter(Boolean);
+      if (oldIds.length) {
+        await uploadService.deleteMultiple(oldIds);
+      }
+    }
+
+    return { success: true, message: "Property updated successfully", data: updated };
+  } catch (err) {
+    // Rollback newly uploaded images if DB write fails
+    if (uploadedIds.length) {
+      await uploadService.deleteMultiple(uploadedIds);
+    }
+    throw err;
+  }
 };
 
 exports.deleteProperty = async (propertyId) => {
@@ -64,6 +122,14 @@ exports.deleteProperty = async (propertyId) => {
   const property = await Property.findByIdAndDelete(propertyId);
   if (!property) {
     return { success: false, message: "Property not found" };
+  }
+
+  // Clean up Cloudinary images on delete
+  if (property.propertyImages?.length) {
+    const ids = property.propertyImages.map((img) => img.publicId).filter(Boolean);
+    if (ids.length) {
+      await uploadService.deleteMultiple(ids);
+    }
   }
 
   return { success: true, message: "Property deleted successfully" };
@@ -78,7 +144,7 @@ exports.getProperties = async (userId) => {
     return { success: false, message: "Invalid userId" };
   }
 
-  const properties = await Property.find({ userId });
+  const properties = await Property.find({ userId }).sort({ createdAt: -1 });
 
   return { success: true, data: properties };
 };

@@ -26,9 +26,20 @@ exports.getProperties = async (req, res, next) => {
 
 exports.addProperty = async (req, res, next) => {
   try {
+    let propertyData = {};
+    try {
+      propertyData = JSON.parse(req.body.propertyData || "{}");
+    } catch {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: "propertyData must be a valid JSON string",
+      });
+    }
+
     const payload = {
-      ...req.body,
-      userId: req.body?.userId,
+      ...propertyData,
+      userId: req.body.userId,
+      files: req.files?.propertyImages || [],
     };
 
     if (!payload.userId) {
@@ -57,6 +68,7 @@ exports.addProperty = async (req, res, next) => {
     return sendSuccess(res, {
       status: STATUS.CREATED,
       message: result.message,
+      data: result.data,
     });
   } catch (err) {
     next(err);
@@ -66,10 +78,21 @@ exports.addProperty = async (req, res, next) => {
 exports.updateProperty = async (req, res, next) => {
   try {
     const { propertyId } = req.params;
-    const result = await addPropertyService.updateProperty(
-      propertyId,
-      req.body
-    );
+
+    let propertyData = {};
+    try {
+      propertyData = JSON.parse(req.body.propertyData || "{}");
+    } catch {
+      return sendError(res, {
+        status: STATUS.BAD_REQUEST,
+        message: "propertyData must be a valid JSON string",
+      });
+    }
+
+    const result = await addPropertyService.updateProperty(propertyId, {
+      ...propertyData,
+      files: req.files?.propertyImages || [],
+    });
 
     if (!result.success) {
       return sendError(res, {
