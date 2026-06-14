@@ -66,6 +66,12 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    photos: [
+      {
+        url: String,
+        publicId: String,
+      },
+    ],
 
     latePaymentPenalty: Number,
   },

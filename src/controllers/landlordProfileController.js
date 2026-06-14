@@ -4,9 +4,7 @@ const { sendSuccess, sendError } = require("../utils/sendResponse");
 
 exports.createLandlordProfile = async (req, res, next) => {
   try {
-    const result = await landlordProfileService.createLandlordProfile(
-      req.body
-    );
+    const result = await landlordProfileService.createLandlordProfile(req.body);
 
     if (result && !result.success) {
       return sendError(res, {

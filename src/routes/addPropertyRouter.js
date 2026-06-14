@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
+const upload = require("../middlewares/upload");
 const addPropertyController = require("../controllers/addPropertyController");
 
-router.post("/add-property", auth, addPropertyController.addProperty);
+router.post(
+  "/add-property",
+  auth,
+  upload.fields([{ name: "propertyImages", maxCount: 5 }]),
+  addPropertyController.addProperty
+);
 router.put(
   "/update-property/:propertyId",
   auth,
@@ -14,5 +20,5 @@ router.delete(
   auth,
   addPropertyController.deleteProperty
 );
-router.get("/get-properties", addPropertyController.getProperties);
+router.post("/get-properties", addPropertyController.getProperties);
 module.exports = router;
