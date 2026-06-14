@@ -36,7 +36,10 @@ exports.addProperty = async (payload) => {
 
   try {
     if (files && files.length) {
-      const uploaded = await uploadService.uploadMultiple(files, "propertyImages");
+      const uploaded = await uploadService.uploadMultiple(
+        files,
+        "propertyImages"
+      );
       uploadedIds.push(...uploaded.map((d) => d.public_id));
       filteredData.propertyImages = uploaded.map((d) => ({
         url: d.url,
@@ -46,7 +49,11 @@ exports.addProperty = async (payload) => {
 
     const property = await Property.create({ ...filteredData, userId });
 
-    return { success: true, message: "Property added successfully", data: property };
+    return {
+      success: true,
+      message: "Property added successfully",
+      data: property,
+    };
   } catch (err) {
     // Rollback any uploaded images if DB write fails
     if (uploadedIds.length) {
@@ -80,7 +87,10 @@ exports.updateProperty = async (propertyId, payload) => {
 
   try {
     if (files && files.length) {
-      const uploaded = await uploadService.uploadMultiple(files, "propertyImages");
+      const uploaded = await uploadService.uploadMultiple(
+        files,
+        "propertyImages"
+      );
       uploadedIds.push(...uploaded.map((d) => d.public_id));
       filteredData.propertyImages = uploaded.map((d) => ({
         url: d.url,
@@ -104,7 +114,11 @@ exports.updateProperty = async (propertyId, payload) => {
       }
     }
 
-    return { success: true, message: "Property updated successfully", data: updated };
+    return {
+      success: true,
+      message: "Property updated successfully",
+      data: updated,
+    };
   } catch (err) {
     // Rollback newly uploaded images if DB write fails
     if (uploadedIds.length) {
@@ -114,25 +128,40 @@ exports.updateProperty = async (propertyId, payload) => {
   }
 };
 
-exports.deleteProperty = async (propertyId) => {
+exports.deleteProperty = async (propertyId, userId) => {
   if (!mongoose.Types.ObjectId.isValid(propertyId)) {
-    return { success: false, message: "Invalid propertyId" };
+    return {
+      success: false,
+      message: "Invalid propertyId",
+    };
   }
 
-  const property = await Property.findByIdAndDelete(propertyId);
+  const property = await Property.findOne({
+    _id: propertyId,
+    userId,
+  });
+
   if (!property) {
-    return { success: false, message: "Property not found" };
+    return {
+      success: false,
+      message: "Property not found or access denied",
+    };
   }
 
-  // Clean up Cloudinary images on delete
-  if (property.propertyImages?.length) {
-    const ids = property.propertyImages.map((img) => img.publicId).filter(Boolean);
+  if (property.photos?.length) {
+    const ids = property.photos.map((img) => img.publicId).filter(Boolean);
+
     if (ids.length) {
       await uploadService.deleteMultiple(ids);
     }
   }
 
-  return { success: true, message: "Property deleted successfully" };
+  await Property.findByIdAndDelete(propertyId);
+
+  return {
+    success: true,
+    message: "Property deleted successfully",
+  };
 };
 
 exports.getProperties = async (userId) => {

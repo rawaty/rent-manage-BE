@@ -113,7 +113,8 @@ exports.updateProperty = async (req, res, next) => {
 exports.deleteProperty = async (req, res, next) => {
   try {
     const { propertyId } = req.params;
-    const result = await addPropertyService.deleteProperty(propertyId);
+    const userId = req.user.id;
+    const result = await addPropertyService.deleteProperty(propertyId, userId);
 
     if (!result.success) {
       return sendError(res, {
