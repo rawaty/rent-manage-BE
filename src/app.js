@@ -20,6 +20,9 @@ app.use(
       // Allow non-browser clients (Postman/cURL/server-to-server)
       if (!origin) return callback(null, true);
 
+      // Always allow Vercel preview deployments
+      if (origin.endsWith(".vercel.app")) return callback(null, true);
+
       // If no env is set, allow localhost to keep local dev easy
       if (!allowedOrigins.length) {
         const localAllowed = ["http://localhost:3000", "http://127.0.0.1:3000"];
@@ -30,7 +33,7 @@ app.use(
       if (allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
