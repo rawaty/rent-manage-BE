@@ -101,7 +101,7 @@ exports.updateProperty = async (propertyId, payload) => {
     const updated = await Property.findByIdAndUpdate(
       propertyId,
       { $set: filteredData },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     // Delete old images from Cloudinary after successful DB write

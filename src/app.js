@@ -5,6 +5,7 @@ const bankDetailsRoute = require("./routes/bankDetailsRoutes");
 const authRoute = require("./routes/authRouter");
 const addPropertyRoute = require("./routes/addPropertyRouter");
 const otpRoute = require("./routes/otpRouter");
+const tenantRoute = require("./routes/tenantRouter");
 const errorHandler = require("./middlewares/errorHandler");
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/bankDetails", bankDetailsRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/property", addPropertyRoute);
 app.use("/api/otp", otpRoute);
+app.use("/api/tenant", tenantRoute);
 
 // Global error handler — must be last
 app.use(errorHandler);

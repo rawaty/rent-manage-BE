@@ -12,7 +12,6 @@ const tenantSchema = new mongoose.Schema(
     landlordId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       index: true,
     },
 
@@ -30,19 +29,29 @@ const tenantSchema = new mongoose.Schema(
 
     mobileNo: {
       type: String,
+      unique: true,
+      required: true,
     },
 
     addressProof: {
-      type: String,
+      url: { type: String },
+      publicId: { type: String },
     },
 
+    // Uploaded document file (e.g. Aadhaar scan, passport scan)
+    documentFile: {
+      url: { type: String },
+      publicId: { type: String },
+    },
+
+    // Document type labels selected by landlord/tenant
     documents: {
       type: [String],
       enum: ["DRIVING_LICENSE", "PASSPORT", "AADHAAR"],
       default: [],
     },
 
-    rent: {
+    monthlyRent: {
       type: Number,
       required: true,
     },
@@ -56,6 +65,11 @@ const tenantSchema = new mongoose.Schema(
       type: String,
       enum: ["ACTIVE", "VACATED"],
       default: "ACTIVE",
+    },
+    applicationStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "PENDING",
     },
   },
   { timestamps: true }

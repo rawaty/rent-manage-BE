@@ -74,6 +74,13 @@ const propertySchema = new mongoose.Schema(
     ],
 
     latePaymentPenalty: Number,
+
+    // auto-incremented when a tenant is onboarded, decremented when vacated
+    tenantCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

@@ -16,7 +16,7 @@ router.patch(
   auth,
   uploadDocument.fields([
     { name: "profileImage", maxCount: 1 },
-    { name: "documents", maxCount: 5 },
+    { name: "documents", maxCount: 3 },
   ]),
   landlordProfileController.updateLandlordProfile
 );
