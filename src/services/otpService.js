@@ -2,6 +2,7 @@ const Otp = require("../models/Otp");
 const User = require("../models/User");
 const CONSTANT = require("../utils/constants");
 const authService = require("../services/authService");
+const smsService = require("./smsService");
 
 exports.generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -37,7 +38,15 @@ exports.sendOtp = async (mobileNo) => {
     { upsert: true, returnDocument: "after" }
   );
 
-  return { success: true, message: "OTP sent successfully" };
+  // Actually deliver it — previously the code was stored but never sent
+  await smsService.sendOtpSms(mobileNo, otp);
+
+  return {
+    success: true,
+    message: "OTP sent successfully",
+    // Development-only: lets the login flow be tested without an SMS gateway
+    data: smsService.canExposeOtp() ? { devOtp: String(otp) } : null,
+  };
 };
 
 exports.verifyOtp = async (mobileNo, enteredOtp, res) => {
@@ -77,8 +86,9 @@ exports.verifyOtp = async (mobileNo, enteredOtp, res) => {
   await Otp.deleteOne({ mobileNo });
 
   const token = authService.generateToken(user);
-  authService.setAuthCookie(res, token);
-  const data = authService.buildAuthResponse(user, token);
+  const refreshToken = authService.generateRefreshToken(user);
+  authService.setAuthCookie(res, token, refreshToken);
+  const data = authService.buildAuthResponse(user, token, refreshToken);
 
   return { success: true, message: "OTP verified successfully", data };
 };

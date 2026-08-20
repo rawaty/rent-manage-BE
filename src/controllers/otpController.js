@@ -27,6 +27,7 @@ exports.sendOtp = async (req, res, next) => {
     return sendSuccess(res, {
       status: STATUS.OK,
       message: result.message,
+      data: result.data ?? null,
     });
   } catch (err) {
     next(err);

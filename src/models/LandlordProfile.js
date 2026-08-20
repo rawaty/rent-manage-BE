@@ -19,6 +19,14 @@ const landlordProfileSchema = new mongoose.Schema(
       url: String,
       public_id: String,
     },
+    // KYC documents uploaded by the landlord. Without this field Mongoose's
+    // strict mode silently discarded every uploaded document.
+    documents: [
+      {
+        url: String,
+        public_id: String,
+      },
+    ],
     panNo: {
       type: String,
     },

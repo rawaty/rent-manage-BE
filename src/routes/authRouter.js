@@ -6,8 +6,10 @@ const {
   loginEmailOrMobileSchema,
   register,
 } = require("../validators/authValidator");
-router.post("/register", userController.register);
+
+router.post("/register", validate(register), userController.register);
 router.post("/login", validate(loginEmailOrMobileSchema), userController.login);
+router.post("/refresh", userController.refresh);
 router.post("/logout", userController.logout);
 
 module.exports = router;

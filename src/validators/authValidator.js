@@ -37,6 +37,13 @@ exports.loginEmailOrMobileSchema = Joi.object({
   });
 
 exports.register = Joi.object({
+  // Required by the User model — validate it here instead of failing at Mongoose
+  name: Joi.string().trim().min(2).required().messages({
+    "string.empty": "Full name is required",
+    "string.min": "Full name must be at least 2 characters",
+    "any.required": "Full name is required",
+  }),
+
   mobileNo: Joi.string()
     .pattern(/^[6-9]\d{9}$/)
     .messages({
@@ -49,10 +56,18 @@ exports.register = Joi.object({
       "string.email": "Enter a valid email",
     }),
 
-  password: Joi.string().required().messages({
+  password: Joi.string().min(8).required().messages({
     "string.empty": "Password is required",
+    "string.min": "Password must be at least 8 characters",
     "any.required": "Password is required",
   }),
+
+  role: Joi.string()
+    .valid("OWNER", "MANAGER", "PG_OWNER", "ADMIN")
+    .default("OWNER")
+    .messages({
+      "any.only": "Invalid role selected",
+    }),
 })
   .or("mobileNo", "emailId") // 🔥 at least one required
   .messages({

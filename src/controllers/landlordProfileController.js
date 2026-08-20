@@ -53,12 +53,25 @@ exports.getProfileData = async (req, res, next) => {
   }
 };
 
+// multipart/form-data carries objects as JSON strings — a malformed one is a
+// client error (400), not an unhandled 500.
+const parseJsonField = (raw, field) => {
+  try {
+    return JSON.parse(raw || "{}");
+  } catch {
+    const err = new Error(`${field} must be a valid JSON string`);
+    err.status = 400;
+    throw err;
+  }
+};
+
 exports.updateLandlordProfile = async (req, res, next) => {
   try {
     const result = await landlordProfileService.updateLandlordProfile({
       userId: req.user.id,
-      landlordData: JSON.parse(req.body.landlordData || "{}"),
-      bankData: JSON.parse(req.body.bankData || "{}"),
+      userData: parseJsonField(req.body.userData, "userData"),
+      landlordData: parseJsonField(req.body.landlordData, "landlordData"),
+      bankData: parseJsonField(req.body.bankData, "bankData"),
       file: req.files?.profileImage?.[0],
       documents: req.files?.documents || [],
     });

@@ -4,7 +4,9 @@ const { sendSuccess, sendError } = require("../utils/sendResponse");
 
 exports.getProperties = async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    // Always scope to the authenticated user — a body-supplied userId would
+    // let any caller read another landlord's portfolio.
+    const userId = req.user.id;
     const result = await addPropertyService.getProperties(userId);
 
     if (result && !result.success) {
@@ -38,16 +40,10 @@ exports.addProperty = async (req, res, next) => {
 
     const payload = {
       ...propertyData,
-      userId: req.body.userId,
+      // Owner comes from the verified token, never from the request body
+      userId: req.user.id,
       files: req.files?.propertyImages || [],
     };
-
-    if (!payload.userId) {
-      return sendError(res, {
-        status: STATUS.BAD_REQUEST,
-        message: "userId is required",
-      });
-    }
 
     if (payload.monthlyRent === undefined || payload.monthlyRent === null) {
       return sendError(res, {
@@ -89,10 +85,14 @@ exports.updateProperty = async (req, res, next) => {
       });
     }
 
-    const result = await addPropertyService.updateProperty(propertyId, {
-      ...propertyData,
-      files: req.files?.propertyImages || [],
-    });
+    const result = await addPropertyService.updateProperty(
+      propertyId,
+      {
+        ...propertyData,
+        files: req.files?.propertyImages || [],
+      },
+      req.user.id
+    );
 
     if (!result.success) {
       return sendError(res, {
@@ -104,6 +104,55 @@ exports.updateProperty = async (req, res, next) => {
     return sendSuccess(res, {
       status: STATUS.OK,
       message: result.message,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getShareLink = async (req, res, next) => {
+  try {
+    const result = await addPropertyService.getShareLink(
+      req.params.propertyId,
+      req.user.id
+    );
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.NOT_FOUND,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: "Share link ready",
+      data: result.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.setListingVisibility = async (req, res, next) => {
+  try {
+    const result = await addPropertyService.setListingVisibility(
+      req.params.propertyId,
+      req.user.id,
+      req.body?.isPubliclyListed
+    );
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.NOT_FOUND,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
+      data: result.data,
     });
   } catch (err) {
     next(err);

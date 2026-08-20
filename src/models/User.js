@@ -21,7 +21,9 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["OWNER", "MANAGER", "ADMIN"],
+      // PG_OWNER is offered on the registration form — without it every PG
+      // owner signup failed Mongoose validation.
+      enum: ["OWNER", "MANAGER", "PG_OWNER", "ADMIN"],
       default: "OWNER",
     },
     isProfileComplete: {

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 const propertySchema = new mongoose.Schema(
   {
@@ -16,7 +17,14 @@ const propertySchema = new mongoose.Schema(
 
     propertyType: {
       type: String,
-      enum: ["FLAT", "APARTMENT", "INDEPENDENT_HOUSE", "PG", "HOSTEL"],
+      enum: [
+        "FLAT",
+        "APARTMENT",
+        "INDEPENDENT_HOUSE",
+        "PG",
+        "HOSTEL",
+        "COMMERCIAL",
+      ],
       default: "FLAT",
     },
 
@@ -81,8 +89,47 @@ const propertySchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+
+    // 🔗 Public sharing
+    // Unguessable id used in the shareable listing URL (/p/:publicId). The
+    // property is only reachable by someone who has the link.
+    publicId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+
+    isPubliclyListed: {
+      type: Boolean,
+      default: true,
+    },
+
+    // 🏠 Occupancy — one active tenancy per property
+    status: {
+      type: String,
+      enum: ["VACANT", "OCCUPIED"],
+      default: "VACANT",
+      index: true,
+    },
+
+    // The tenant currently occupying the property, if any
+    currentTenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      default: null,
+    },
   },
   { timestamps: true }
 );
+
+// Generate the share id on first save so existing rows can be backfilled by
+// simply re-saving them.
+// Mongoose 9 no longer passes a `next` callback to hooks — return/async only.
+propertySchema.pre("save", function () {
+  if (!this.publicId) {
+    this.publicId = crypto.randomBytes(9).toString("base64url"); // 12 chars
+  }
+});
 
 module.exports = mongoose.model("Property", propertySchema);

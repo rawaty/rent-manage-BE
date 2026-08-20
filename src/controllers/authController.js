@@ -1,6 +1,7 @@
 const authService = require("../services/authService");
 const STATUS = require("../utils/statusCode");
 const { sendSuccess, sendError } = require("../utils/sendResponse");
+const { getCookie } = require("../utils/cookies");
 
 exports.register = async (req, res, next) => {
   try {
@@ -27,6 +28,31 @@ exports.login = async (req, res, next) => {
   try {
     const { emailId, mobileNo, password } = req.body;
     const result = await authService.login(emailId, mobileNo, password, res);
+
+    if (!result.success) {
+      return sendError(res, {
+        status: STATUS.UNAUTHORIZED,
+        message: result.message,
+      });
+    }
+
+    return sendSuccess(res, {
+      status: STATUS.OK,
+      message: result.message,
+      data: result.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.refresh = async (req, res, next) => {
+  try {
+    // Cookie first, body as fallback for clients where cross-site cookies fail
+    const refreshToken =
+      getCookie(req, "refreshToken") || req.body?.refreshToken;
+
+    const result = await authService.refresh(refreshToken, res);
 
     if (!result.success) {
       return sendError(res, {

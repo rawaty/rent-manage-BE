@@ -63,7 +63,7 @@ exports.addProperty = async (payload) => {
   }
 };
 
-exports.updateProperty = async (propertyId, payload) => {
+exports.updateProperty = async (propertyId, payload, userId) => {
   if (!mongoose.Types.ObjectId.isValid(propertyId)) {
     return { success: false, message: "Invalid propertyId" };
   }
@@ -75,9 +75,10 @@ exports.updateProperty = async (propertyId, payload) => {
     return { success: false, message: "monthlyRent must be a number" };
   }
 
-  const property = await Property.findById(propertyId);
+  // Scope the lookup to the owner so one landlord cannot edit another's property
+  const property = await Property.findOne({ _id: propertyId, userId });
   if (!property) {
-    return { success: false, message: "Property not found" };
+    return { success: false, message: "Property not found or access denied" };
   }
 
   const { files } = payload;
@@ -148,8 +149,11 @@ exports.deleteProperty = async (propertyId, userId) => {
     };
   }
 
-  if (property.photos?.length) {
-    const ids = property.photos.map((img) => img.publicId).filter(Boolean);
+  // Field is propertyImages — reading `photos` silently orphaned every image
+  if (property.propertyImages?.length) {
+    const ids = property.propertyImages
+      .map((img) => img.publicId)
+      .filter(Boolean);
 
     if (ids.length) {
       await uploadService.deleteMultiple(ids);
@@ -161,6 +165,65 @@ exports.deleteProperty = async (propertyId, userId) => {
   return {
     success: true,
     message: "Property deleted successfully",
+  };
+};
+
+/**
+ * Return (and lazily create) the shareable public link for a property.
+ *
+ * Properties created before public sharing existed have no publicId, so it is
+ * minted on first request rather than in a one-off migration.
+ */
+exports.getShareLink = async (propertyId, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+    return { success: false, message: "Invalid propertyId" };
+  }
+
+  const property = await Property.findOne({ _id: propertyId, userId });
+  if (!property) {
+    return { success: false, message: "Property not found or access denied" };
+  }
+
+  if (!property.publicId) {
+    // The pre-save hook mints the id
+    await property.save();
+  }
+
+  const base = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+
+  return {
+    success: true,
+    data: {
+      publicId: property.publicId,
+      url: `${base}/p/${property.publicId}`,
+      isPubliclyListed: property.isPubliclyListed,
+      status: property.status,
+    },
+  };
+};
+
+/** Enable or disable the public listing without destroying the link. */
+exports.setListingVisibility = async (propertyId, userId, isPubliclyListed) => {
+  if (!mongoose.Types.ObjectId.isValid(propertyId)) {
+    return { success: false, message: "Invalid propertyId" };
+  }
+
+  const property = await Property.findOneAndUpdate(
+    { _id: propertyId, userId },
+    { $set: { isPubliclyListed: Boolean(isPubliclyListed) } },
+    { returnDocument: "after" }
+  );
+
+  if (!property) {
+    return { success: false, message: "Property not found or access denied" };
+  }
+
+  return {
+    success: true,
+    message: property.isPubliclyListed
+      ? "Property listing is now active"
+      : "Property listing has been disabled",
+    data: { isPubliclyListed: property.isPubliclyListed },
   };
 };
 

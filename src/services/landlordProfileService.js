@@ -68,7 +68,13 @@ exports.updateLandlordProfile = async (payload) => {
   const uploadedIds = [];
 
   try {
-    const { userId, landlordData, bankData, file, documents } = payload;
+    const { userId, userData, landlordData, bankData, file, documents } =
+      payload;
+
+    const filteredUserData = filterField(
+      userData,
+      CONSTANT.USER_ALLOWED_FIELDS
+    );
 
     const filteredLandlordData = filterField(
       landlordData,
@@ -95,6 +101,16 @@ exports.updateLandlordProfile = async (payload) => {
       const docs = await uploadService.uploadMultiple(documents, "documents");
       uploadedIds.push(...docs.map((d) => d.public_id));
       filteredLandlordData.documents = docs;
+    }
+
+    // Update the base User record (name / mobile / email)
+    let updatedUser = null;
+    if (Object.keys(filteredUserData).length > 0) {
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $set: filteredUserData },
+        { returnDocument: "after", session, runValidators: true }
+      );
     }
 
     // Update landlord profile
@@ -125,10 +141,20 @@ exports.updateLandlordProfile = async (payload) => {
     await session.commitTransaction();
     session.endSession();
 
+    // updatedLandlord is null when the caller only touched bank/user data and
+    // no profile document exists yet — guard before calling toObject().
     return {
       success: true,
       data: {
-        user: filterField(updatedLandlord.toObject(), CONSTANT.LANDLORD_ALLOWED_FIELDS),
+        user: updatedUser
+          ? filterField(updatedUser.toObject(), CONSTANT.USER_ALLOWED_FIELDS)
+          : null,
+        profile: updatedLandlord
+          ? filterField(
+              updatedLandlord.toObject(),
+              CONSTANT.LANDLORD_ALLOWED_FIELDS
+            )
+          : null,
         bankDetails: updatedBank
           ? filterField(updatedBank.toObject(), CONSTANT.BANK_ALLOWED_FIELDS)
           : null,
