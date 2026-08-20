@@ -11,6 +11,7 @@ const enquiryRoute = require("./routes/enquiryRouter");
 const applicationRoute = require("./routes/applicationRouter");
 const notificationRoute = require("./routes/notificationRouter");
 const errorHandler = require("./middlewares/errorHandler");
+const { isAllowedOrigin } = require("./utils/appUrl");
 const app = express();
 
 // Render (and most PaaS) terminate TLS at a proxy. Without this, every request
@@ -18,34 +19,22 @@ const app = express();
 // throttle all visitors as one.
 app.set("trust proxy", 1);
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow non-browser clients (Postman/cURL/server-to-server)
       if (!origin) return callback(null, true);
 
-      // Always allow Vercel preview deployments
-      if (origin.endsWith(".vercel.app")) return callback(null, true);
+      // Same allowlist used to build tenant-facing links — see utils/appUrl
+      if (isAllowedOrigin(origin)) return callback(null, true);
 
-      // If no env is set, allow localhost to keep local dev easy
-      if (!allowedOrigins.length) {
-        const localAllowed = ["http://localhost:3000", "http://127.0.0.1:3000"];
-        if (localAllowed.includes(origin)) return callback(null, true);
-        return callback(new Error("Not allowed by CORS"));
-      }
-
-      if (allowedOrigins.includes(origin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 app.use("/api/landlord-profile", landlordProfileRoute);

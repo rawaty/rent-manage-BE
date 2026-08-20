@@ -13,19 +13,12 @@ const compliance = require("../utils/compliance");
 const uploadService = require("./uploadService");
 const notificationService = require("./notificationService");
 const smsService = require("./smsService");
+const { buildAppLink, UNRESOLVED_MESSAGE } = require("../utils/appUrl");
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
 const hashToken = (raw) =>
   crypto.createHash("sha256").update(String(raw)).digest("hex");
-
-const buildApplicationLink = (rawToken) => {
-  const base = (process.env.APP_URL || "http://localhost:3000").replace(
-    /\/$/,
-    ""
-  );
-  return `${base}/apply/${rawToken}`;
-};
 
 /**
  * Upload whichever documents were attached and merge them into the update.
@@ -124,7 +117,7 @@ const validateForSubmission = (doc) => {
 };
 
 // ─── Landlord: invite a prospect to fill the form ─────────────────────────────
-exports.createInvite = async (enquiryId, landlordId) => {
+exports.createInvite = async (enquiryId, landlordId, req) => {
   if (!mongoose.Types.ObjectId.isValid(enquiryId)) {
     return { success: false, message: "Invalid enquiry id" };
   }
@@ -185,7 +178,13 @@ exports.createInvite = async (enquiryId, landlordId) => {
   enquiry.status = "INVITED";
   enquiry.applicationId = application._id;
 
-  const link = buildApplicationLink(rawToken);
+  // Built from the calling frontend (or APP_URL); refuse rather than send a
+  // link the tenant cannot open.
+  const link = buildAppLink(req, `/apply/${rawToken}`);
+  if (!link) {
+    return { success: false, message: UNRESOLVED_MESSAGE };
+  }
+
   const sms = await smsService.sendSms(
     enquiry.mobileNo,
     `Please complete your tenant application for ${

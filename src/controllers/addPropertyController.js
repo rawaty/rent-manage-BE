@@ -114,7 +114,8 @@ exports.getShareLink = async (req, res, next) => {
   try {
     const result = await addPropertyService.getShareLink(
       req.params.propertyId,
-      req.user.id
+      req.user.id,
+      req
     );
 
     if (!result.success) {

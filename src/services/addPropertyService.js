@@ -4,6 +4,7 @@ const User = require("../models/User");
 const { filterField } = require("../utils/filtereField");
 const CONSTANT = require("../utils/constants");
 const uploadService = require("./uploadService");
+const { buildAppLink, UNRESOLVED_MESSAGE } = require("../utils/appUrl");
 
 exports.addProperty = async (payload) => {
   const { userId, monthlyRent, files } = payload;
@@ -174,7 +175,7 @@ exports.deleteProperty = async (propertyId, userId) => {
  * Properties created before public sharing existed have no publicId, so it is
  * minted on first request rather than in a one-off migration.
  */
-exports.getShareLink = async (propertyId, userId) => {
+exports.getShareLink = async (propertyId, userId, req) => {
   if (!mongoose.Types.ObjectId.isValid(propertyId)) {
     return { success: false, message: "Invalid propertyId" };
   }
@@ -189,13 +190,18 @@ exports.getShareLink = async (propertyId, userId) => {
     await property.save();
   }
 
-  const base = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+  // Derived from the calling frontend (or APP_URL) — never a hardcoded host,
+  // because this link is what the landlord sends to a prospective tenant.
+  const url = buildAppLink(req, `/p/${property.publicId}`);
+  if (!url) {
+    return { success: false, message: UNRESOLVED_MESSAGE };
+  }
 
   return {
     success: true,
     data: {
       publicId: property.publicId,
-      url: `${base}/p/${property.publicId}`,
+      url,
       isPubliclyListed: property.isPubliclyListed,
       status: property.status,
     },

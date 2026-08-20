@@ -7,7 +7,8 @@ exports.createInvite = async (req, res, next) => {
   try {
     const result = await applicationService.createInvite(
       req.params.enquiryId,
-      req.user.id
+      req.user.id,
+      req
     );
 
     if (!result.success) {
