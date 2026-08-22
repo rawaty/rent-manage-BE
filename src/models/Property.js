@@ -74,10 +74,13 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Public by design — these render on the unauthenticated listing page
     propertyImages: [
       {
         url: String,
         publicId: String,
+        visibility: { type: String, enum: ["public", "private"] },
+        resourceType: String,
       },
     ],
 

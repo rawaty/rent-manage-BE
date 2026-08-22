@@ -7,6 +7,21 @@ const compliance = require("../utils/compliance");
 const uploadService = require("./uploadService");
 const notificationService = require("./notificationService");
 
+/**
+ * Replace stored asset URLs with signed ones before a tenant record leaves the
+ * server. Private assets are unreachable from their bare URL, so this is what
+ * makes documents viewable — and it only ever runs after an ownership check.
+ */
+const withSignedAssets = (tenant) => {
+  const t = typeof tenant.toObject === "function" ? tenant.toObject() : { ...tenant };
+
+  ["addressProof", "photograph", "documentFile"].forEach((field) => {
+    if (t[field]) t[field] = uploadService.withSignedUrl(t[field]);
+  });
+
+  return t;
+};
+
 exports.onBoardTenant = async (payload) => {
   // files come from req.files (multer), body fields from req.body
   const { addressProofFile, documentFile, ...bodyData } = payload;
@@ -43,10 +58,12 @@ exports.onBoardTenant = async (payload) => {
         addressProofFile,
         "addressProof"
       );
-      uploadedIds.push(uploaded.public_id);
+      uploadedIds.push(uploaded);
       filteredData.addressProof = {
         url: uploaded.url,
         publicId: uploaded.public_id,
+        visibility: uploaded.visibility,
+        resourceType: uploaded.resourceType,
       };
     }
 
@@ -56,10 +73,12 @@ exports.onBoardTenant = async (payload) => {
         documentFile,
         "tenantDocuments"
       );
-      uploadedIds.push(uploaded.public_id);
+      uploadedIds.push(uploaded);
       filteredData.documentFile = {
         url: uploaded.url,
         publicId: uploaded.public_id,
+        visibility: uploaded.visibility,
+        resourceType: uploaded.resourceType,
       };
     }
 
@@ -165,7 +184,7 @@ exports.listTenants = async (landlordId, { propertyId, status, search } = {}) =>
     .populate("propertyId", "propertyName area city propertyType monthlyRent")
     .sort({ createdAt: -1 });
 
-  return { success: true, data: tenants };
+  return { success: true, data: tenants.map(withSignedAssets) };
 };
 
 exports.getTenant = async (id, landlordId) => {
@@ -185,7 +204,7 @@ exports.getTenant = async (id, landlordId) => {
   return {
     success: true,
     data: {
-      tenant,
+      tenant: withSignedAssets(tenant),
       policeVerification: compliance.policeVerificationGuidance(
         tenant.propertyId?.city
       ),

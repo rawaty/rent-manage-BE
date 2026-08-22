@@ -24,10 +24,19 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
+// Files are buffered in memory before streaming to Cloudinary, so an unbounded
+// upload is a straight route to an out-of-memory crash and a storage bill.
+const limits = {
+  fileSize: 5 * 1024 * 1024, // 5 MB per file
+  files: 5,
+  // Reject oversized multipart text fields too (e.g. a giant propertyData blob)
+  fieldSize: 100 * 1024,
+};
+
 // For landlord profile — images + PDFs
-const uploadDocument = multer({ storage, fileFilter: documentFilter });
+const uploadDocument = multer({ storage, fileFilter: documentFilter, limits });
 
 // For property images — images only
-const uploadImage = multer({ storage, fileFilter: imageFilter });
+const uploadImage = multer({ storage, fileFilter: imageFilter, limits });
 
 module.exports = { uploadDocument, uploadImage };

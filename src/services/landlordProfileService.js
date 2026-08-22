@@ -41,7 +41,15 @@ exports.getProfileData = async (userId) => {
     return { success: false, message: "Landlord profile not found" };
   }
 
-  return { success: true, data: { profileData, bank: bank || null } };
+  const signed = profileData.toObject();
+  if (signed.profileImage) {
+    signed.profileImage = uploadService.withSignedUrl(signed.profileImage);
+  }
+  if (Array.isArray(signed.documents)) {
+    signed.documents = signed.documents.map((d) => uploadService.withSignedUrl(d));
+  }
+
+  return { success: true, data: { profileData: signed, bank: bank || null } };
 };
 
 exports.deleteLandlordProfile = async (id) => {
@@ -92,14 +100,14 @@ exports.updateLandlordProfile = async (payload) => {
     // Upload new profile image
     if (file) {
       const image = await uploadService.uploadSingle(file, "profile");
-      uploadedIds.push(image.public_id);
+      uploadedIds.push(image);
       filteredLandlordData.profileImage = image;
     }
 
     // Upload documents
     if (documents && documents.length) {
       const docs = await uploadService.uploadMultiple(documents, "documents");
-      uploadedIds.push(...docs.map((d) => d.public_id));
+      uploadedIds.push(...docs);
       filteredLandlordData.documents = docs;
     }
 

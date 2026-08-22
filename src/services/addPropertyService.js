@@ -37,14 +37,19 @@ exports.addProperty = async (payload) => {
 
   try {
     if (files && files.length) {
+      // Deliberately PUBLIC: these render on the shared listing page, which
+      // has no session behind it.
       const uploaded = await uploadService.uploadMultiple(
         files,
-        "propertyImages"
+        "propertyImages",
+        uploadService.VISIBILITY.PUBLIC
       );
-      uploadedIds.push(...uploaded.map((d) => d.public_id));
+      uploadedIds.push(...uploaded);
       filteredData.propertyImages = uploaded.map((d) => ({
         url: d.url,
         publicId: d.public_id,
+        visibility: d.visibility,
+        resourceType: d.resourceType,
       }));
     }
 
@@ -89,14 +94,19 @@ exports.updateProperty = async (propertyId, payload, userId) => {
 
   try {
     if (files && files.length) {
+      // Deliberately PUBLIC: these render on the shared listing page, which
+      // has no session behind it.
       const uploaded = await uploadService.uploadMultiple(
         files,
-        "propertyImages"
+        "propertyImages",
+        uploadService.VISIBILITY.PUBLIC
       );
-      uploadedIds.push(...uploaded.map((d) => d.public_id));
+      uploadedIds.push(...uploaded);
       filteredData.propertyImages = uploaded.map((d) => ({
         url: d.url,
         publicId: d.public_id,
+        visibility: d.visibility,
+        resourceType: d.resourceType,
       }));
     }
 

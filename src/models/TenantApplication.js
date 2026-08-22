@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const CONSTANT = require("../utils/constants");
 
+// See Tenant.js — these two fields tell a read how to sign the asset.
 const fileSchema = {
   url: String,
   publicId: String,
+  visibility: { type: String, enum: ["public", "private"] },
+  resourceType: String,
 };
 
 /**

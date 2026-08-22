@@ -1,9 +1,14 @@
 const mongoose = require("mongoose");
 const CONSTANT = require("../utils/constants");
 
+// `visibility` and `resourceType` record how the asset was stored so a read
+// can mint the right signed URL. Absent on documents predating private uploads,
+// which are genuinely public on Cloudinary.
 const fileSchema = {
   url: { type: String },
   publicId: { type: String },
+  visibility: { type: String, enum: ["public", "private"] },
+  resourceType: { type: String },
 };
 
 /**

@@ -38,9 +38,15 @@ const attachFiles = async (files, target) => {
     const file = files[field]?.[0];
     if (!file) continue;
 
+    // PRIVATE by default — identity documents must never be publicly fetchable
     const uploaded = await uploadService.uploadSingle(file, folder);
-    uploadedIds.push(uploaded.public_id);
-    target[field] = { url: uploaded.url, publicId: uploaded.public_id };
+    uploadedIds.push(uploaded);
+    target[field] = {
+      url: uploaded.url,
+      publicId: uploaded.public_id,
+      visibility: uploaded.visibility,
+      resourceType: uploaded.resourceType,
+    };
   }
 
   return uploadedIds;
@@ -467,6 +473,13 @@ exports.getApplication = async (id, landlordId) => {
     return { success: false, message: "Application not found or access denied" };
   }
 
+  // Identity documents are private on Cloudinary; mint signed URLs now that
+  // ownership has been confirmed by the query above.
+  const signed = application.toObject();
+  ["idDocument", "photograph", "addressProof"].forEach((field) => {
+    if (signed[field]) signed[field] = uploadService.withSignedUrl(signed[field]);
+  });
+
   const profile = await LandlordProfile.findOne({ userId: landlordId });
 
   // Surface the regulatory position on these terms alongside the application
@@ -479,7 +492,7 @@ exports.getApplication = async (id, landlordId) => {
     landlordHasPan: Boolean(profile?.panNo),
   });
 
-  return { success: true, data: { application, complianceWarnings: warnings } };
+  return { success: true, data: { application: signed, complianceWarnings: warnings } };
 };
 
 // ─── Landlord: accept → assign the property ───────────────────────────────────
